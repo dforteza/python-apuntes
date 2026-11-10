@@ -81,7 +81,8 @@ Doc: [find](https://docs.python.org/3/library/stdtypes.html#str.find) · [isdigi
 | `"hola".replace("o", "a")` | `"hala"` | cambia un trozo por otro |
 | `"a b  c".split()` | `["a", "b", "c"]` | divide por espacios |
 | `"a:b".split(":")` | `["a", "b"]` | divide por lo que indiques |
-| `"a\nb\n".splitlines()` | `["a", "b"]` | divide por líneas |
+| `"a\nb\n".split("\n")` | `["a", "b", ""]` | divide por `\n` y deja un `""` al final |
+| `"a\nb\n".splitlines()` | `["a", "b"]` | divide por líneas, sin el `""` del final |
 | `", ".join(["a", "b"])` | `"a, b"` | une una lista con ese separador |
 
 Doc: [strip](https://docs.python.org/3/library/stdtypes.html#str.strip) · [replace](https://docs.python.org/3/library/stdtypes.html#str.replace) · [split](https://docs.python.org/3/library/stdtypes.html#str.split) · [splitlines](https://docs.python.org/3/library/stdtypes.html#str.splitlines) · [join](https://docs.python.org/3/library/stdtypes.html#str.join)

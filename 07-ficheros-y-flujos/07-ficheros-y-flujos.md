@@ -138,10 +138,10 @@ Doc: [jerarquía de OSError](https://docs.python.org/3/library/exceptions.html#o
 
 Doc: [sys.stdin](https://docs.python.org/3/library/sys.html#sys.stdin) · [flush](https://docs.python.org/3/library/io.html#io.IOBase.flush)
 
-**Buffer:** lo que escribes en `stdout` no sale al momento: se acumula y sale de golpe al llegar un `\n`. `flush()` = "sácalo ya".
+**Buffer:** `sys.stdout.write()` (y `print()`) **ESCRIBEN EN EL BUFFER DE `stdout`, NO EN LA TERMINAL.** Si `stdout` es una terminal, el buffer se vacía al llegar un `\n`. `flush()` lo vacía en ese momento.
 
 **`input()` hace 3 cosas**, que a mano son:
 
 1. escribir el prompt → `sys.stdout.write("Name: ")`
 2. sacarlo ya → `sys.stdout.flush()`
-3. leer una línea y quitarle el `\n` → `sys.stdin.readline().rstrip("\n")`
+3. leer lo que escribe el usuario **hasta que pulsa Enter** (incluye el `\n`) y quitarle el `\n` → `sys.stdin.readline().rstrip("\n")`
