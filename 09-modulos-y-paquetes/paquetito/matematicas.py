@@ -1,0 +1,10 @@
+def suma(a: int, b: int) -> int:
+    return (a + b)
+
+
+def resta(a: int, b: int) -> int:
+    return (a - b)
+
+
+def multiplica(a: int, b: int) -> int:
+    return (a * b)
