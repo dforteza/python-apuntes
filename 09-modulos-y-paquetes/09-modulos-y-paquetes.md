@@ -47,7 +47,9 @@ Doc: [venv](https://docs.python.org/3/library/venv.html) · [sys.prefix](https:/
 
 ## 2. pip y requirements.txt
 
-**pip** es un **GESTOR DE PAQUETES** (*package manager*): instala paquetes externos, descargados de [PyPI](https://pypi.org), en el entorno activo. No ejecuta tu código: eso lo hace `python`, el **INTÉRPRETE**. **`requirements.txt`** es la **LISTA DE PAQUETES** que necesita el proyecto.
+- **pip** es un **GESTOR DE PAQUETES** (*package manager*): instala paquetes externos, descargados de [PyPI](https://pypi.org), en el entorno activo. 
+- No ejecuta tu código: eso lo hace `python`, el **INTÉRPRETE**. 
+- **`requirements.txt`** es la **LISTA DE PAQUETES** que necesita el proyecto.
 
 | Para qué | Comando |
 |---|---|
@@ -77,7 +79,6 @@ Importar un paquete que no está instalado da `ModuleNotFoundError`.
 
 Doc: [pip](https://pip.pypa.io/en/stable/user_guide/) · [requirements.txt](https://pip.pypa.io/en/stable/reference/requirements-file-format/)
 
-> PIP INSTALA EN EL ENTORNO ACTIVO: ACTIVA EL VENV ANTES DE INSTALAR. Fuera de un venv, en tu Ubuntu da el error `externally-managed-environment`.
 
 ## 3. Poetry
 
@@ -115,24 +116,29 @@ package-mode = false
 
 **Comandos:**
 
-| Para qué | Comando |
+| Acción | Comando |
 |---|---|
-| Instalar Poetry (una vez por ordenador) | `pipx install poetry` |
-| Crear el `pyproject.toml` con un **asistente interactivo**; no crea el entorno ni instala nada | `poetry init` |
-| Añadir un paquete | `poetry add numpy` |
-| Instalar todas las dependencias del `pyproject.toml`; equivale a `pip install -r requirements.txt` | `poetry install` |
-| Ejecutar un script dentro del entorno de Poetry, sin activar nada | `poetry run python script.py` |
+| **INSTALAR POETRY** (una vez por ordenador) | `pipx install poetry` |
+| **CREAR PROYECTO** (solo el `pyproject.toml`) | `poetry init` |
+| **AÑADIR PAQUETE** | `poetry add numpy` |
+| **BORRAR PAQUETE** | `poetry remove numpy` |
+| **INSTALAR TODO** (lo del `pyproject.toml`) | `poetry install` |
+| **EJECUTAR** (sin activar nada) | `poetry run python script.py` |
+| **VER ENTORNOS** | `poetry env list` |
+| **VER RUTA DEL ENTORNO** | `poetry env info --path` |
+| **BORRAR ENTORNO** (con todos los paquetes) | `poetry env remove --all` |
 
-**Pasos en un proyecto nuevo, sin `pyproject.toml`:**
+> TOML Y LOCK SON SOLO LISTAS; EL CÓDIGO DE LOS PAQUETES ESTÁ EN EL ENTORNO.
 
-1. `poetry init`
-2. `poetry add numpy`
-3. `poetry run python script.py`
+> `poetry run` NO ACTIVA EL ENTORNO: no hay que salir de nada.
 
-**Pasos en un proyecto con `pyproject.toml` ya escrito:**
+**Pasos:**
 
-1. `poetry install`
-2. `poetry run python script.py`
+| Caso | Comandos |
+|---|---|
+| **PROYECTO NUEVO** | `poetry init` → `poetry add numpy` → `poetry run python script.py` |
+| **CON TOML** (la evaluación) | `poetry install` → `poetry run python script.py` |
+| **DE CERO** (con toml) | `rm poetry.lock` → `poetry env remove --all` → `poetry install` |
 
 **pip vs Poetry:** `poetry.lock` es una **LISTA DE VERSIONES EXACTAS** que Poetry escribe solo; con `requirements.txt`, esa lista la tienes que escribir tú a mano.
 
@@ -185,9 +191,9 @@ Un **módulo** es un **FICHERO `.py`** cuyo código puedes usar desde otro fiche
 
 **Dónde lo busca Python**, en orden, según la lista `sys.path`:
 
-1. La carpeta del script que ejecutas.
-2. La librería estándar.
-3. Los paquetes instalados del entorno activo.
+1. La CARPETA del script QUE EJECUTAS.
+2. La LIBRERIA estándar.
+3. Los PAQUETES instalados del ENTORNO ACTIVO.
 
 Si no lo encuentra, da `ModuleNotFoundError`.
 
@@ -275,7 +281,7 @@ Además, `__all__` deja claro que el import de `__init__.py` es intencionado: si
 
 ## 8. Imports absolutos y relativos
 
-Hay dos formas de indicar dónde está un módulo:
+2 formas: **(HACEN LO MISMO)**
 
 | Tipo | Qué es | Ejemplo |
 |---|---|---|
@@ -309,3 +315,107 @@ from ..matematicas import suma
 | Un fichero del paquete, hacia un módulo de fuera | absoluto | el punto no puede salir del paquete |
 
 > EL PUNTO SIGNIFICA "MI PAQUETE", NO "MI CARPETA".
+
+## 9. Import circular
+
+**Import circular** (*circular import*): **DOS MÓDULOS QUE SE IMPORTAN EL UNO AL OTRO**. Según cómo se escriba, da `ImportError`.
+
+Ejemplos ejecutables: carpeta [`circular/`](circular/), uno por caso. Se lanzan desde aquí:
+
+```bash
+python3 circular/0_explota/main.py          # ImportError
+python3 circular/1_dentro_funcion/main.py   # A presenta a B, amigo de A
+python3 circular/2_tercer_modulo/main.py    # A presenta a B, amigo de A
+python3 circular/3_importar_modulo/main.py  # A presenta a B, amigo de A
+```
+
+### El problema
+
+**Contexto:** `a` necesita algo de `b`, y `b` necesita algo de `a` (como el spellbook y el validator de pm-05 ex4).
+
+```python
+# a.py
+from b import saluda_b
+
+def saluda_a() -> str:
+    return "A"
+
+def presenta() -> str:
+    return "A presenta a " + saluda_b()
+```
+
+```python
+# b.py
+from a import saluda_a
+
+def saluda_b() -> str:
+    return "B, amigo de " + saluda_a()
+```
+
+**Idea previa:** `import` **EJECUTA EL FICHERO DE ARRIBA ABAJO**; hasta que llega al final, el módulo está **A MEDIO CARGAR** (*partially initialized*).
+
+**Qué pasa con `import a`:**
+
+1. Empieza `a.py`. Línea 1: `from b import ...` → **pausa `a`** y va a `b.py`.
+2. Empieza `b.py`. Línea 1: `from a import saluda_a` → `a` existe, pero a medias (sigue en su línea 1).
+3. `saluda_a` aún no está definida → `ImportError`.
+
+```text
+ImportError: cannot import name 'saluda_a' from partially initialized module 'a'
+(most likely due to a circular import)
+```
+
+> EXPLOTA PORQUE `b` PIDE EL NOMBRE `saluda_a` MIENTRAS SE CARGA, CUANDO `a` AÚN NO HA TERMINADO.
+
+### La idea de las soluciones
+
+> TODAS CAMBIAN **CUÁNDO** SE PIDE EL NOMBRE: NO AL CARGAR EL FICHERO, SINO **AL LLAMAR A LA FUNCIÓN**, CUANDO LOS DOS YA HAN TERMINADO (o quitan el ciclo).
+
+### Solución 1: import dentro de la función
+
+```python
+# b.py
+def saluda_b() -> str:
+    from a import saluda_a
+    return "B, amigo de " + saluda_a()
+```
+
+**Clave:** `def` solo crea la función, **NO EJECUTA SU CUERPO**.
+
+1. `a.py` empieza → va a `b.py`.
+2. `b.py` solo define `saluda_b` (el import no se ejecuta) → termina.
+3. `a.py` sigue → define `saluda_a` → termina.
+4. `presenta()` llama a `saluda_b()` → **AHORA** se ejecuta el import → `saluda_a` ya existe.
+
+### Solución 2: tercer módulo
+
+```python
+# c.py
+def saluda_a() -> str:
+    return "A"
+```
+
+```python
+# a.py → from b import saluda_b
+#        from c import saluda_a
+# b.py → from c import saluda_a
+```
+
+**Clave:** lo que comparten se va a `c.py`. `a` importa de `b` y de `c`; `b` solo de `c` → **YA NO HAY CICLO**.
+
+### Solución 3: importar el módulo, no el nombre
+
+```python
+# b.py
+import a
+
+def saluda_b() -> str:
+    return "B, amigo de " + a.saluda_a()
+```
+
+**Clave:**
+
+- `import a` → **SOLO PIDE EL MÓDULO**: existe aunque esté a medias → no falla.
+- `from a import saluda_a` → **PIDE EL NOMBRE**: aún no existe → falla.
+
+`a.saluda_a` se busca al ejecutar esa línea, es decir, al llamar a `saluda_b()`; para entonces `a` ya está completo.
