@@ -12,6 +12,8 @@
 8. [Clase anidada](#8-clase-anidada)
 9. [Métodos dunder](#9-métodos-dunder)
 10. [Clases abstractas](#10-clases-abstractas)
+11. [Subtipos](#11-subtipos)
+12. [Protocol](#12-protocol)
 
 ---
 
@@ -280,4 +282,102 @@ rose.show_stats()                     # Stats: 1 grow
 
 ## 10. Clases abstractas
 
-*(pendiente)*
+- Una **clase abstracta** es una clase que **NO SE PUEDE INSTANCIAR**: solo sirve de **MOLDE** para sus hijas. Se crea heredando de **`ABC`** (módulo `abc`).
+- Un **método abstracto** (`@abstractmethod`) solo declara la firma: **CADA HIJA ESTÁ OBLIGADA A ESCRIBIRLO**. Los métodos normales se heredan tal cual.
+
+```python
+from abc import ABC, abstractmethod
+
+
+class Plant(ABC):
+    @abstractmethod
+    def grow(self):                 # abstracto: solo la firma
+        pass
+
+    def show(self):                 # concreto: se hereda tal cual
+        print("I am a plant")
+
+
+class Flower(Plant):
+    def grow(self):                 # obligatorio escribirlo
+        print("Flower grows")
+```
+
+Si no se cumple, Python lanza `TypeError` **AL INSTANCIAR**, no al llamar al método:
+
+```python
+class Tree(Plant):                  # no escribe grow()
+    pass
+
+
+Flower()    # OK
+Plant()     # TypeError: Can't instantiate abstract class Plant without an implementation for abstract method 'grow'
+Tree()      # TypeError: Can't instantiate abstract class Tree without an implementation for abstract method 'grow'
+```
+
+> UNA HIJA QUE **NO ESCRIBE TODOS** LOS MÉTODOS ABSTRACTOS **SIGUE SIENDO ABSTRACTA** → TAMPOCO SE PUEDE INSTANCIAR.
+
+## 11. Subtipos
+
+Un **subtipo** es una clase que **SE PUEDE USAR EN LUGAR DE OTRA**: donde se pide un `Plant`, se acepta un `Flower` → **`Flower` ES SUBTIPO DE `Plant`**.
+
+Hay **DOS FORMAS** de ser subtipo, según **POR QUÉ** se acepta:
+
+- **NOMINAL**: se acepta **PORQUE HEREDA** de la otra clase, como `class Flower(Plant)`. Es el de la herencia y las ABC.
+- **ESTRUCTURAL**: se acepta **PORQUE TIENE LOS MÉTODOS QUE SE PIDEN**, sin heredar. Es el de `Protocol`.
+
+## 12. Protocol
+
+[doc](https://docs.python.org/3/library/typing.html#typing.Protocol)
+
+- **`Protocol`** es una **CLASE BASE** del módulo `typing`. Una clase que hereda de ella es una **CLASE PROTOCOLO** (*protocol class*): declara **QUÉ MÉTODOS TIENE QUE TENER UN OBJETO**, solo con la firma.
+- Otra clase **CUMPLE LA CLASE PROTOCOLO SI TIENE ESOS MÉTODOS**, sin heredar de ella → **subtipado estructural** ([§11](#11-subtipos)).
+
+```python
+from typing import Protocol
+
+
+class Showable(Protocol):           # clase protocolo: exige show()
+    def show(self) -> None:
+        ...                         # solo la firma
+
+
+class Robot:                        # no hereda de Showable
+    def show(self) -> None:
+        print("I am a robot")
+
+
+def display(item: Showable) -> None:
+    item.show()
+
+
+display(Robot())    # OK → tiene show()
+display(42)         # mypy: Argument 1 to "display" has incompatible type "int"; expected "Showable"
+```
+
+**QUIÉN LO COMPRUEBA:** el código pasa por **DOS MOMENTOS**:
+
+1. **ANTES DE EJECUTAR** (`mypy fichero.py`): mypy **LEE** el código sin ejecutarlo y comprueba los hints → **AQUÍ ES DONDE SIRVE EL `Protocol`**.
+2. **AL EJECUTAR** (`python3 fichero.py`): Python **IGNORA LOS HINTS Y EL `Protocol`** → solo falla al llegar a la llamada al método.
+
+| `display(42)` | Cuándo | Resultado |
+|---|---|---|
+| **mypy** | antes de ejecutar | `error: ... incompatible type "int"; expected "Showable"` |
+| **Python** | al llamar a `item.show()` | `AttributeError: 'int' object has no attribute 'show'` |
+
+> EL `Protocol` **SOLO LO USA MYPY**, PARA AVISARTE DEL ERROR **ANTES DE EJECUTAR**. A PYTHON LE DA IGUAL.
+
+### ABC frente a Protocol
+
+Las dos **OBLIGAN A QUE UNA CLASE TENGA CIERTOS MÉTODOS**. Cambia **CÓMO** y **QUIÉN** obliga:
+
+| | **ABC** ([§10](#10-clases-abstractas)) | **Protocol** |
+|---|---|---|
+| **QUÉ ES** | clase **abstracta** (módulo `abc`) | clase **protocolo** (módulo `typing`) |
+| **LAS QUE CUMPLEN** | **HEREDAN** de ella | **NO HEREDAN**: solo tienen los métodos |
+| **SUBTIPADO** ([§11](#11-subtipos)) | nominal | estructural |
+| **QUIÉN OBLIGA** | **Python, al instanciar** → `TypeError` | **mypy, antes de ejecutar** |
+| **CÓDIGO** | puede tener métodos concretos que **SE HEREDAN** | **SOLO FIRMAS** |
+| **CUÁNDO** | una familia de clases **PROPIAS** que comparten código | aceptar **CUALQUIER CLASE** que tenga los métodos |
+
+> EN UN SISTEMA DE PLUGINS SE USA **`Protocol`**: UN PLUGIN ESCRITO POR OTRO **NO TIENE QUE IMPORTAR NI HEREDAR** TU CLASE, BASTA CON QUE **TENGA EL MÉTODO**.
