@@ -167,6 +167,34 @@ Flower("Rose", "red").show()
 
 > SI LA HIJA DEFINE `__init__` Y **NO LLAMA A `super().__init__()`**, LOS ATRIBUTOS DE LA MADRE **NO SE CREAN** → `AttributeError` AL USARLOS.
 
+### Herencia múltiple y MRO
+
+- **Herencia múltiple**: una clase con **VARIAS MADRES**: `class Rose(Plant, Blooming):`.
+- El **MRO** (*Method Resolution Order*) es el **ORDEN EN QUE PYTHON BUSCA** los métodos: la hija y luego las madres **DE IZQUIERDA A DERECHA**. Se ve con `Rose.__mro__`.
+
+```python
+class Plant:
+    def __init__(self):
+        super().__init__()          # NO va a object: va al siguiente del MRO
+        self.name = "Rose"
+
+
+class Blooming:
+    def __init__(self):
+        self.bloomed = False
+
+
+class Rose(Plant, Blooming):
+    pass
+
+
+print(Rose.__mro__)     # Rose -> Plant -> Blooming -> object
+r = Rose()
+print(r.name, r.bloomed)   # Rose False
+```
+
+> CON HERENCIA MÚLTIPLE, **`super()` NO SALTA A LA MADRE: SALTA AL SIGUIENTE DEL MRO**. SI `Plant` NO LLAMA A `super().__init__()`, **`Blooming` NO SE INICIALIZA**.
+
 ## 6. Polimorfismo
 
 [definicion](https://github.com/dforteza/java-basics/blob/master/teoria/ut7/ut7-resumen.md#3-polimorfismo)
