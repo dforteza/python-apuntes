@@ -5,6 +5,7 @@
 1. [Módulo random](#1-módulo-random)
 2. [Módulo sys](#2-módulo-sys)
 3. [Módulo os](#3-módulo-os)
+4. [Módulo enum](#4-módulo-enum)
 
 ---
 
@@ -67,3 +68,33 @@ Teoría: [ut5_rutas_directorios.pdf §2.1](https://github.com/dforteza/PythonBas
 Doc: [os.getenv](https://docs.python.org/3/library/os.html#os.getenv) · [os.path](https://docs.python.org/3/library/os.path.html)
 
 > `os.path` SOLO TRABAJA CON EL **TEXTO** DE LA RUTA: NO COMPRUEBA QUE EXISTA.
+
+## 4. Módulo enum
+
+Un **módulo de la biblioteca estándar** para crear **ENUMERACIONES**. Hay que importarlo: `from enum import Enum`.
+
+- Una **ENUMERACIÓN** (`Enum`) es una **CLASE CON UN CONJUNTO CERRADO DE VALORES POSIBLES**, cada uno con nombre. Se usa cuando un dato **SOLO PUEDE SER UNA DE UNAS POCAS OPCIONES** (p. ej. un color, un rango, un tipo).
+- Cada opción es un **MIEMBRO**: tiene un **nombre** (`RED`) y un **valor** (`"red"`).
+
+```python
+from enum import Enum
+
+
+class Color(Enum):
+    RED = "red"
+    BLUE = "blue"
+```
+
+| Expresión | Devuelve | Ejemplo |
+|---|---|---|
+| `Color.RED` | el **miembro** | `Color.RED` |
+| `Color.RED.value` | su **valor** | `"red"` |
+| `Color.RED.name` | su **nombre** | `"RED"` |
+| `Color("red")` | el miembro **a partir de su valor** | `Color.RED` |
+| `Color("green")` | valor que no existe | `ValueError` |
+
+> **PARA MOSTRARLO, USA `.value`:** `print(Color.RED)` → `Color.RED`; `print(Color.RED.value)` → `red`.
+
+- **Comparar:** `color == Color.RED` (con el miembro, no con `"red"`).
+
+Doc: [enum](https://docs.python.org/3/library/enum.html)
